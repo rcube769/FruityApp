@@ -7,9 +7,22 @@ export interface User {
   updated_at: string
 }
 
+export interface Property {
+  id: string
+  user_id: string
+  address: string
+  lat: number
+  lng: number
+  is_verified: boolean
+  detected_at: string
+  created_at: string
+  updated_at: string
+}
+
 export interface Listing {
   id: string
   user_id: string
+  property_id?: string | null
   fruit_type: string
   quantity: string
   description: string | null

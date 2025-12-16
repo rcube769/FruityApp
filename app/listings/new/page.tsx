@@ -1,14 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { FRUIT_TYPES, QUANTITY_OPTIONS } from '@/lib/utils'
 import toast from 'react-hot-toast'
+import { Property } from '@/lib/types/database'
 
 export default function NewListingPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [loadingProperty, setLoadingProperty] = useState(true)
+  const [property, setProperty] = useState<Property | null>(null)
   const [formData, setFormData] = useState({
     fruit_type: '',
     quantity: '',
@@ -18,6 +21,30 @@ export default function NewListingPage() {
     available_end: '',
     pickup_notes: ''
   })
+
+  useEffect(() => {
+    fetchProperty()
+  }, [])
+
+  const fetchProperty = async () => {
+    try {
+      const response = await fetch('/api/property')
+      if (response.ok) {
+        const data = await response.json()
+        if (data) {
+          setProperty(data)
+          setFormData(prev => ({
+            ...prev,
+            full_address: data.address
+          }))
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching property:', error)
+    } finally {
+      setLoadingProperty(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -129,19 +156,39 @@ export default function NewListingPage() {
           {/* Address */}
           <div>
             <label htmlFor="full_address" className="block text-sm font-medium text-gray-700 mb-2">
-              Full Address *
+              Property Address *
             </label>
-            <input
-              type="text"
-              id="full_address"
-              name="full_address"
-              value={formData.full_address}
-              onChange={handleChange}
-              required
-              placeholder="123 Main St, San Francisco, CA 94102"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-            />
-            <p className="mt-1 text-sm text-gray-500">
+            {loadingProperty ? (
+              <div className="flex items-center gap-2 text-gray-600 py-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600"></div>
+                Loading your property...
+              </div>
+            ) : property ? (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">🏡</span>
+                  <div>
+                    <p className="font-semibold text-green-900">{property.address}</p>
+                    <p className="text-sm text-green-700 mt-1">
+                      ✓ Using your verified property
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="text-sm text-yellow-800 mb-3">
+                  You haven't set up your property yet. You need to verify your property location first.
+                </p>
+                <Link
+                  href="/property/setup"
+                  className="inline-block bg-orange-600 hover:bg-orange-700 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
+                >
+                  Set Up My Property
+                </Link>
+              </div>
+            )}
+            <p className="mt-2 text-sm text-gray-500">
               🔒 Your exact address is kept private. Only an approximate location will be shown on the map.
             </p>
           </div>
