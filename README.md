@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🍊 Fruity - Community Fruit Sharing App
 
-## Getting Started
+A free, community-focused web app to reduce food waste by connecting people who have excess backyard fruit with neighbors who want it.
 
-First, run the development server:
+## 🚀 Quick Start - Get Running in 15 Minutes!
 
+### Your Localhost Link Will Be: http://localhost:3000
+
+Follow these 5 simple steps:
+
+### 1. Install Dependencies
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Set Up Supabase (5 min)
+- Go to [supabase.com](https://supabase.com) and create a project
+- Run the SQL from `SETUP_INSTRUCTIONS.md` Step 1.2
+- Copy your API keys
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Set Up Mapbox (1 min)
+- Go to [mapbox.com](https://mapbox.com) and sign up
+- Copy your default public token
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 4. Create `.env.local` File
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_key_here
+NEXT_PUBLIC_MAPBOX_TOKEN=pk.your_token_here
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
 
-## Learn More
+### 5. Run the App!
+```bash
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+**Open http://localhost:3000 in your browser!** 🎉
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+For detailed instructions, see [SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## ✨ What's Built
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- ✅ Beautiful landing page
+- ✅ Magic link authentication
+- ✅ Create fruit listings
+- ✅ Browse map view
+- ✅ User dashboard
+- ✅ Pickup requests
+- ✅ Privacy-protected addresses
+- ✅ Full API backend
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🏗️ Tech Stack
+
+- Next.js 15 + TypeScript + Tailwind
+- Supabase (Database + Auth)
+- Mapbox (Maps)
+
+## 📖 Documentation
+
+- [SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md) - Step-by-step setup
+- [DESIGN.md](../DESIGN.md) - System architecture
+- [IMPLEMENTATION_GUIDE.md](../IMPLEMENTATION_GUIDE.md) - Code details
+
+---
+
+Made with 🍊 for a healthier planet 🌍
