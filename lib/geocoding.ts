@@ -1,3 +1,5 @@
+import { geocodeAddressFree } from './geocoding-free'
+
 interface GeocodeResult {
   lat: number
   lng: number
@@ -8,6 +10,18 @@ interface GeocodeResult {
 }
 
 export async function geocodeAddress(address: string): Promise<GeocodeResult> {
+  // Check if Mapbox token is available
+  const hasMapboxToken =
+    process.env.NEXT_PUBLIC_MAPBOX_TOKEN &&
+    !process.env.NEXT_PUBLIC_MAPBOX_TOKEN.includes('your_token')
+
+  // Use free Nominatim if no Mapbox token
+  if (!hasMapboxToken) {
+    console.log('🌍 [FREE MODE] Using Nominatim for geocoding (no Mapbox token)')
+    return geocodeAddressFree(address)
+  }
+
+  // Use Mapbox if token is available
   const encodedAddress = encodeURIComponent(address)
   const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodedAddress}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}&country=US`
 
