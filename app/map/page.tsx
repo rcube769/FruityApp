@@ -2,9 +2,20 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { PublicListing } from '@/lib/types/database'
 import { FRUIT_TYPES } from '@/lib/utils'
 import toast from 'react-hot-toast'
+
+// Dynamically import the map to avoid SSR issues
+const FruitMap = dynamic(() => import('@/components/FruitMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[500px] bg-gray-100 rounded-lg flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+    </div>
+  ),
+})
 
 export default function MapPage() {
   const [listings, setListings] = useState<PublicListing[]>([])
@@ -71,13 +82,19 @@ export default function MapPage() {
           </select>
         </div>
 
-        {/* Simplified Map Notice */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <p className="text-sm text-blue-800">
-            📍 <strong>Note:</strong> This is a simplified view. In production, this would show an interactive Mapbox map.
-            To add maps, get a Mapbox token and uncomment the map component code.
-          </p>
-        </div>
+        {/* Map Section */}
+        {!loading && listings.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Map View ({listings.length} {listings.length === 1 ? 'listing' : 'listings'})
+            </h2>
+            <FruitMap
+              listings={listings}
+              center={[listings[0].approximate_lat, listings[0].approximate_lng]}
+              zoom={11}
+            />
+          </div>
+        )}
 
         {/* Listings Grid */}
         {loading ? (

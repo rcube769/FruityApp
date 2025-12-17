@@ -48,6 +48,13 @@ export default function NewListingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Validate property is set up
+    if (!property || !formData.full_address) {
+      toast.error('Please set up your property first before creating a listing.')
+      return
+    }
+
     setLoading(true)
 
     try {

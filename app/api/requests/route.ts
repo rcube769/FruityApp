@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Filter out full_address for non-accepted requests
-    const filteredData = data.map(request => {
+    const filteredData = data.map((request: any) => {
       if (request.status !== 'accepted' && request.listings) {
         const { full_address, ...listingWithoutAddress } = request.listings as any
         return { ...request, listings: listingWithoutAddress }
