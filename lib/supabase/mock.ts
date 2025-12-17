@@ -24,62 +24,62 @@ interface MockListing {
   created_at: string
 }
 
-// In-memory storage
-const mockStorage = {
-  user: null as MockUser | null,
-  listings: [] as MockListing[],
-  requests: [] as any[],
-  properties: [] as any[],
+// Browser localStorage-based storage (persists between refreshes)
+const STORAGE_KEYS = {
+  USER: 'fruity_mock_user',
+  LISTINGS: 'fruity_mock_listings',
+  REQUESTS: 'fruity_mock_requests',
+  PROPERTIES: 'fruity_mock_properties',
 }
 
-// Mock data
-const sampleListings: MockListing[] = [
-  {
-    id: '1',
-    user_id: 'mock-user',
-    fruit_type: 'Oranges',
-    quantity: 'A few bags',
-    description: 'Sweet Valencia oranges from our backyard tree',
-    city: 'San Francisco',
-    state: 'CA',
-    approximate_lat: 37.7749,
-    approximate_lng: -122.4194,
-    available_start: '2025-12-20',
-    available_end: '2026-01-05',
-    status: 'active',
-    created_at: new Date().toISOString(),
+// Helper to get from localStorage
+function getFromStorage<T>(key: string, defaultValue: T): T {
+  if (typeof window === 'undefined') return defaultValue
+  try {
+    const item = localStorage.getItem(key)
+    return item ? JSON.parse(item) : defaultValue
+  } catch {
+    return defaultValue
+  }
+}
+
+// Helper to save to localStorage
+function saveToStorage<T>(key: string, value: T): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(key, JSON.stringify(value))
+  } catch (error) {
+    console.error('Failed to save to localStorage:', error)
+  }
+}
+
+// Persistent storage using localStorage
+const mockStorage = {
+  get user() {
+    return getFromStorage<MockUser | null>(STORAGE_KEYS.USER, null)
   },
-  {
-    id: '2',
-    user_id: 'mock-user-2',
-    fruit_type: 'Lemons',
-    quantity: '10-20 pieces',
-    description: 'Meyer lemons, great for cooking',
-    city: 'Oakland',
-    state: 'CA',
-    approximate_lat: 37.8044,
-    approximate_lng: -122.2712,
-    available_start: '2025-12-15',
-    available_end: '2025-12-31',
-    status: 'active',
-    created_at: new Date().toISOString(),
+  set user(value: MockUser | null) {
+    saveToStorage(STORAGE_KEYS.USER, value)
   },
-  {
-    id: '3',
-    user_id: 'mock-user-3',
-    fruit_type: 'Figs',
-    quantity: 'Many bags',
-    description: 'Fresh figs ready to pick',
-    city: 'Berkeley',
-    state: 'CA',
-    approximate_lat: 37.8715,
-    approximate_lng: -122.2730,
-    available_start: '2025-12-18',
-    available_end: '2026-01-10',
-    status: 'active',
-    created_at: new Date().toISOString(),
+  get listings() {
+    return getFromStorage<MockListing[]>(STORAGE_KEYS.LISTINGS, [])
   },
-]
+  set listings(value: MockListing[]) {
+    saveToStorage(STORAGE_KEYS.LISTINGS, value)
+  },
+  get requests() {
+    return getFromStorage<any[]>(STORAGE_KEYS.REQUESTS, [])
+  },
+  set requests(value: any[]) {
+    saveToStorage(STORAGE_KEYS.REQUESTS, value)
+  },
+  get properties() {
+    return getFromStorage<any[]>(STORAGE_KEYS.PROPERTIES, [])
+  },
+  set properties(value: any[]) {
+    saveToStorage(STORAGE_KEYS.PROPERTIES, value)
+  },
+}
 
 export const mockSupabase = {
   auth: {
@@ -120,22 +120,21 @@ export const mockSupabase = {
       eq: (column: string, value: any) => ({
         single: async () => {
           if (table === 'listings') {
-            const listing = [...sampleListings, ...mockStorage.listings].find(
-              (l: any) => l[column] === value
-            )
+            const listings = mockStorage.listings
+            const listing = listings.find((l: any) => l[column] === value)
             return { data: listing || null, error: null }
           }
           if (table === 'properties') {
-            const property = mockStorage.properties.find((p: any) => p[column] === value)
+            const properties = mockStorage.properties
+            const property = properties.find((p: any) => p[column] === value)
             return { data: property || null, error: null }
           }
           return { data: null, error: null }
         },
         maybeSingle: async () => {
           if (table === 'listings') {
-            const listing = [...sampleListings, ...mockStorage.listings].find(
-              (l: any) => l[column] === value
-            )
+            const listings = mockStorage.listings
+            const listing = listings.find((l: any) => l[column] === value)
             return { data: listing || null, error: null }
           }
           return { data: null, error: null }
@@ -144,7 +143,7 @@ export const mockSupabase = {
       order: (column: string, options: any) => ({
         then: async (resolve: any) => {
           if (table === 'listings') {
-            resolve({ data: [...sampleListings, ...mockStorage.listings], error: null })
+            resolve({ data: mockStorage.listings, error: null })
           } else {
             resolve({ data: [], error: null })
           }
@@ -152,7 +151,7 @@ export const mockSupabase = {
       }),
       then: async (resolve: any) => {
         if (table === 'listings') {
-          resolve({ data: [...sampleListings, ...mockStorage.listings], error: null })
+          resolve({ data: mockStorage.listings, error: null })
         } else {
           resolve({ data: [], error: null })
         }
@@ -169,9 +168,13 @@ export const mockSupabase = {
           }
 
           if (table === 'listings') {
-            mockStorage.listings.push(newItem)
+            const listings = mockStorage.listings
+            listings.push(newItem)
+            mockStorage.listings = listings
           } else if (table === 'properties') {
-            mockStorage.properties.push(newItem)
+            const properties = mockStorage.properties
+            properties.push(newItem)
+            mockStorage.properties = properties
           }
 
           console.log(`[MOCK] Created ${table}:`, newItem)
