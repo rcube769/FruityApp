@@ -26,6 +26,7 @@ export default function ListingDetailPage() {
   const router = useRouter()
   const [listing, setListing] = useState<Listing | null>(null)
   const [loading, setLoading] = useState(true)
+  const [checkingAuth, setCheckingAuth] = useState(true)
   const [requesting, setRequesting] = useState(false)
   const [user, setUser] = useState<any>(null)
 
@@ -34,13 +35,39 @@ export default function ListingDetailPage() {
     if (params.id) {
       fetchListing()
     }
+
+    // Subscribe to auth changes
+    const supabase = createClient()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser(session.user)
+      } else {
+        setUser(null)
+      }
+      setCheckingAuth(false)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [params.id])
 
   const checkAuth = async () => {
     const supabase = createClient()
+
+    // First try to get the session
     const { data: { session } } = await supabase.auth.getSession()
+
     if (session?.user) {
       setUser(session.user)
+      setCheckingAuth(false)
+    } else {
+      // If no session, try getUser as fallback
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setUser(user)
+      }
+      setCheckingAuth(false)
     }
   }
 
@@ -195,7 +222,12 @@ export default function ListingDetailPage() {
           )}
 
           <div className="border-t pt-6">
-            {user ? (
+            {checkingAuth ? (
+              <div className="text-center py-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
+                <p className="text-gray-600 mt-2">Checking authentication...</p>
+              </div>
+            ) : user ? (
               <button
                 onClick={handleRequestPickup}
                 disabled={requesting}
