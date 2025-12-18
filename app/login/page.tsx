@@ -17,10 +17,13 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
 
+    // Use the configured app URL or fallback to window.location.origin
+    const redirectUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${redirectUrl}/auth/callback`,
       },
     })
 
