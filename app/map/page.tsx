@@ -139,10 +139,11 @@ export default function MapPage() {
                   <p className="text-sm text-gray-500 mb-4 line-clamp-2">{listing.description}</p>
                 )}
                 <Link
-                  href="/login"
+                  href={`/listings/${listing.id}`}
                   className="block w-full text-center bg-orange-600 hover:bg-orange-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  Request Pickup
+                  View Details
                 </Link>
               </div>
             ))}
