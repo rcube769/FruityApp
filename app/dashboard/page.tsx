@@ -40,7 +40,24 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    const supabase = createClient()
+
+    // Check session on mount
     checkUser()
+
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser(session.user)
+        setLoading(false)
+      } else {
+        router.push('/login')
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [])
 
   useEffect(() => {
@@ -55,12 +72,23 @@ export default function DashboardPage() {
 
   const checkUser = async () => {
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      router.push('/login')
-      return
+
+    // First try to get the session
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (session?.user) {
+      setUser(session.user)
+      setLoading(false)
+    } else {
+      // If no session, try getUser as fallback
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setUser(user)
+        setLoading(false)
+      } else {
+        router.push('/login')
+      }
     }
-    setUser(user)
   }
 
   const fetchMyListings = async () => {
