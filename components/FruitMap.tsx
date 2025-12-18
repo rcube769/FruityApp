@@ -106,6 +106,9 @@ export default function FruitMap({ listings, center = [37.7749, -122.4194], zoom
                 <p className="text-xs text-gray-500">
                   📍 {listing.city}, {listing.state}
                 </p>
+                <p className="text-xs text-orange-600 font-semibold mt-1">
+                  ⚠️ Approximate location (±500m)
+                </p>
                 <p className="text-xs text-gray-500 mt-1">
                   📅 Available: {new Date(listing.available_start).toLocaleDateString()} - {new Date(listing.available_end).toLocaleDateString()}
                 </p>
