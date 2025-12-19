@@ -49,11 +49,10 @@ export default function LoginPage() {
 
             toast.success('Account created! Redirecting...')
 
-            // Longer delay to ensure cookies are fully set before redirect
-            await new Promise(resolve => setTimeout(resolve, 1000))
-
-            // Use window.location for more reliable redirect
-            window.location.href = '/dashboard'
+            // Force a full page reload to dashboard
+            setTimeout(() => {
+              window.location.replace('/dashboard')
+            }, 1000)
           } else {
             // No session - email confirmation required
             toast.success('Account created! Please check your email to confirm your account before signing in.')
@@ -115,11 +114,10 @@ export default function LoginPage() {
 
         toast.success('Welcome back!')
 
-        // Longer delay to ensure cookies are fully set before redirect
-        await new Promise(resolve => setTimeout(resolve, 1000))
-
-        // Use window.location for more reliable redirect
-        window.location.href = '/dashboard'
+        // Force a full page reload to dashboard
+        setTimeout(() => {
+          window.location.replace('/dashboard')
+        }, 1000)
       }
     } catch (error: any) {
       toast.error(error.message || 'Something went wrong')
