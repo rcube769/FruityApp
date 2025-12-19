@@ -68,7 +68,10 @@ export default function LoginPage() {
           password,
         })
 
+        console.log('Sign in response:', { data, error })
+
         if (error) {
+          console.error('Sign in error:', error)
           // Provide more helpful error messages
           if (error.message.includes('Email not confirmed')) {
             toast.error('Please confirm your email before signing in. Check your inbox for the confirmation link.')
@@ -82,24 +85,32 @@ export default function LoginPage() {
 
         // Check if we got a user back
         if (!data.user) {
+          console.error('No user in response')
           toast.error('Sign in failed. Please try again.')
           return
         }
 
-        // Ensure user profile exists
-        const { data: profile, error: profileError } = await supabase
-          .from('users')
-          .select('id')
-          .eq('id', data.user.id)
-          .single()
+        console.log('Sign in successful, user:', data.user.email)
 
-        if (!profile && !profileError) {
-          // Create profile if it doesn't exist
-          await supabase.from('users').insert({
-            id: data.user.id,
-            email: data.user.email!,
-            display_name: data.user.email?.split('@')[0] || 'User'
-          })
+        // Ensure user profile exists
+        try {
+          const { data: profile, error: profileError } = await supabase
+            .from('users')
+            .select('id')
+            .eq('id', data.user.id)
+            .single()
+
+          if (!profile || profileError?.code === 'PGRST116') {
+            // Create profile if it doesn't exist
+            await supabase.from('users').insert({
+              id: data.user.id,
+              email: data.user.email!,
+              display_name: data.user.email?.split('@')[0] || 'User'
+            })
+          }
+        } catch (err) {
+          console.error('Profile check/create error:', err)
+          // Continue anyway - profile creation isn't critical for login
         }
 
         toast.success('Welcome back!')
