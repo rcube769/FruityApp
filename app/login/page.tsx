@@ -48,7 +48,8 @@ export default function LoginPage() {
             }
 
             toast.success('Account created! Redirecting...')
-            router.push('/dashboard')
+            // Use window.location for more reliable redirect
+            window.location.href = '/dashboard'
           } else {
             // No session - email confirmation required
             toast.success('Account created! Please check your email to confirm your account before signing in.')
@@ -72,27 +73,35 @@ export default function LoginPage() {
           } else {
             toast.error(error.message)
           }
-        } else if (data.session && data.user) {
-          toast.success('Welcome back!')
-
-          // Ensure user profile exists
-          const { data: profile } = await supabase
-            .from('users')
-            .select('id')
-            .eq('id', data.user.id)
-            .single()
-
-          if (!profile) {
-            // Create profile if it doesn't exist
-            await supabase.from('users').insert({
-              id: data.user.id,
-              email: data.user.email!,
-              display_name: data.user.email?.split('@')[0] || 'User'
-            })
-          }
-
-          router.push('/dashboard')
+          return
         }
+
+        // Check if we got a user back
+        if (!data.user) {
+          toast.error('Sign in failed. Please try again.')
+          return
+        }
+
+        // Ensure user profile exists
+        const { data: profile, error: profileError } = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', data.user.id)
+          .single()
+
+        if (!profile && !profileError) {
+          // Create profile if it doesn't exist
+          await supabase.from('users').insert({
+            id: data.user.id,
+            email: data.user.email!,
+            display_name: data.user.email?.split('@')[0] || 'User'
+          })
+        }
+
+        toast.success('Welcome back!')
+
+        // Use window.location for more reliable redirect
+        window.location.href = '/dashboard'
       }
     } catch (error: any) {
       toast.error(error.message || 'Something went wrong')
