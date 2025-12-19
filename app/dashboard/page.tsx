@@ -171,6 +171,9 @@ export default function DashboardPage() {
               <Link href="/map" className="text-gray-700 hover:text-orange-600 font-medium">
                 Find Fruit
               </Link>
+              <Link href="/messages" className="text-gray-700 hover:text-orange-600 font-medium">
+                Messages
+              </Link>
               <Link
                 href="/listings/new"
                 className="bg-orange-600 hover:bg-orange-700 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
