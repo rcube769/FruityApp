@@ -32,15 +32,29 @@ export default function LoginPage() {
         if (error) {
           toast.error(error.message)
         } else if (data.user) {
-          // Create user profile
-          await supabase.from('users').insert({
-            id: data.user.id,
-            email: data.user.email!,
-            display_name: data.user.email?.split('@')[0] || 'User'
-          })
+          // Check if email confirmation is required
+          if (data.session) {
+            // Session established - user can log in immediately
+            // Create user profile
+            const { error: insertError } = await supabase.from('users').insert({
+              id: data.user.id,
+              email: data.user.email!,
+              display_name: data.user.email?.split('@')[0] || 'User'
+            })
 
-          toast.success('Account created! Redirecting...')
-          router.push('/dashboard')
+            if (insertError) {
+              console.error('Profile creation error:', insertError)
+              // Profile might already exist, that's okay
+            }
+
+            toast.success('Account created! Redirecting...')
+            router.push('/dashboard')
+          } else {
+            // No session - email confirmation required
+            toast.success('Account created! Please check your email to confirm your account before signing in.')
+            setIsSignUp(false) // Switch to sign-in mode
+            setPassword('') // Clear password field
+          }
         }
       } else {
         // Sign in
@@ -50,9 +64,33 @@ export default function LoginPage() {
         })
 
         if (error) {
-          toast.error(error.message)
-        } else if (data.user) {
+          // Provide more helpful error messages
+          if (error.message.includes('Email not confirmed')) {
+            toast.error('Please confirm your email before signing in. Check your inbox for the confirmation link.')
+          } else if (error.message.includes('Invalid login credentials')) {
+            toast.error('Incorrect email or password. Please try again.')
+          } else {
+            toast.error(error.message)
+          }
+        } else if (data.session && data.user) {
           toast.success('Welcome back!')
+
+          // Ensure user profile exists
+          const { data: profile } = await supabase
+            .from('users')
+            .select('id')
+            .eq('id', data.user.id)
+            .single()
+
+          if (!profile) {
+            // Create profile if it doesn't exist
+            await supabase.from('users').insert({
+              id: data.user.id,
+              email: data.user.email!,
+              display_name: data.user.email?.split('@')[0] || 'User'
+            })
+          }
+
           router.push('/dashboard')
         }
       }
