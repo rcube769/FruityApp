@@ -48,6 +48,10 @@ export default function LoginPage() {
             }
 
             toast.success('Account created! Redirecting...')
+
+            // Small delay to ensure cookies are set before redirect
+            await new Promise(resolve => setTimeout(resolve, 500))
+
             // Use window.location for more reliable redirect
             window.location.href = '/dashboard'
           } else {
@@ -99,6 +103,9 @@ export default function LoginPage() {
         }
 
         toast.success('Welcome back!')
+
+        // Small delay to ensure cookies are set before redirect
+        await new Promise(resolve => setTimeout(resolve, 500))
 
         // Use window.location for more reliable redirect
         window.location.href = '/dashboard'
