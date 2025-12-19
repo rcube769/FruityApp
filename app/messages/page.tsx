@@ -9,7 +9,12 @@ interface PickupRequest {
   listing_id: string
   status: string
   created_at: string
-  listing: {
+  listings?: {
+    fruit_type: string
+    city: string
+    state: string
+  }
+  listing?: {
     fruit_type: string
     city: string
     state: string
@@ -51,13 +56,23 @@ export default function MessagesPage() {
 
   const fetchRequests = async () => {
     try {
-      const response = await fetch('/api/pickup-requests')
-      if (response.ok) {
-        const data = await response.json()
-        setRequests(data)
-        if (data.length > 0) {
-          setSelectedRequest(data[0])
-        }
+      // Fetch both incoming (for my listings) and outgoing (requests I made) requests
+      const [incomingResponse, outgoingResponse] = await Promise.all([
+        fetch('/api/requests?type=incoming'),
+        fetch('/api/requests?type=outgoing')
+      ])
+
+      const incoming = incomingResponse.ok ? await incomingResponse.json() : []
+      const outgoing = outgoingResponse.ok ? await outgoingResponse.json() : []
+
+      // Combine and sort by created_at
+      const allRequests = [...incoming, ...outgoing].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )
+
+      setRequests(allRequests)
+      if (allRequests.length > 0) {
+        setSelectedRequest(allRequests[0])
       }
     } catch (error) {
       console.error('Error fetching requests:', error)
@@ -153,40 +168,45 @@ export default function MessagesPage() {
                 <h2 className="font-bold text-lg">Conversations</h2>
               </div>
               <div className="divide-y divide-gray-200">
-                {requests.map((req) => (
-                  <button
-                    key={req.id}
-                    onClick={() => setSelectedRequest(req)}
-                    className={`w-full text-left p-4 hover:bg-gray-50 transition-colors ${
-                      selectedRequest?.id === req.id ? 'bg-orange-50 border-l-4 border-orange-600' : ''
-                    }`}
-                  >
-                    <h3 className="font-semibold text-gray-900">{req.listing.fruit_type}</h3>
-                    <p className="text-sm text-gray-600">
-                      {req.listing.city}, {req.listing.state}
-                    </p>
-                    <span className={`text-xs mt-1 inline-block px-2 py-1 rounded ${
-                      req.status === 'accepted' ? 'bg-green-100 text-green-800' :
-                      req.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {req.status}
-                    </span>
-                  </button>
-                ))}
+                {requests.map((req) => {
+                  const listingData = req.listings || req.listing
+                  return (
+                    <button
+                      key={req.id}
+                      onClick={() => setSelectedRequest(req)}
+                      className={`w-full text-left p-4 hover:bg-gray-50 transition-colors ${
+                        selectedRequest?.id === req.id ? 'bg-orange-50 border-l-4 border-orange-600' : ''
+                      }`}
+                    >
+                      <h3 className="font-semibold text-gray-900">{listingData?.fruit_type}</h3>
+                      <p className="text-sm text-gray-600">
+                        {listingData?.city}, {listingData?.state}
+                      </p>
+                      <span className={`text-xs mt-1 inline-block px-2 py-1 rounded ${
+                        req.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                        req.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {req.status}
+                      </span>
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
             {/* Chat Area */}
-            {selectedRequest && (
-              <div className="md:col-span-2 bg-white rounded-lg shadow-md flex flex-col" style={{ height: '600px' }}>
-                {/* Chat Header */}
-                <div className="p-4 border-b border-gray-200">
-                  <h2 className="font-bold text-lg">{selectedRequest.listing.fruit_type}</h2>
-                  <p className="text-sm text-gray-600">
-                    {selectedRequest.listing.city}, {selectedRequest.listing.state}
-                  </p>
-                </div>
+            {selectedRequest && (() => {
+              const listingData = selectedRequest.listings || selectedRequest.listing
+              return (
+                <div className="md:col-span-2 bg-white rounded-lg shadow-md flex flex-col" style={{ height: '600px' }}>
+                  {/* Chat Header */}
+                  <div className="p-4 border-b border-gray-200">
+                    <h2 className="font-bold text-lg">{listingData?.fruit_type}</h2>
+                    <p className="text-sm text-gray-600">
+                      {listingData?.city}, {listingData?.state}
+                    </p>
+                  </div>
 
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -235,7 +255,8 @@ export default function MessagesPage() {
                   </div>
                 </form>
               </div>
-            )}
+              )
+            })()}
           </div>
         )}
       </div>
