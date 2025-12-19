@@ -86,7 +86,17 @@ export default function DashboardPage() {
         setUser(user)
         setLoading(false)
       } else {
-        router.push('/login')
+        // Wait a bit before redirecting in case session is still loading
+        await new Promise(resolve => setTimeout(resolve, 500))
+
+        // Check one more time
+        const { data: { session: retrySession } } = await supabase.auth.getSession()
+        if (retrySession?.user) {
+          setUser(retrySession.user)
+          setLoading(false)
+        } else {
+          router.push('/login')
+        }
       }
     }
   }
