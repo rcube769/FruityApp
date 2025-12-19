@@ -8,52 +8,59 @@ import Link from 'next/link'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isSignUp, setIsSignUp] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [sent, setSent] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
-    // Use the configured app URL or fallback to window.location.origin
-    const redirectUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+    try {
+      if (isSignUp) {
+        // Sign up
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+          }
+        })
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${redirectUrl}/auth/callback`,
-      },
-    })
+        if (error) {
+          toast.error(error.message)
+        } else if (data.user) {
+          // Create user profile
+          await supabase.from('users').insert({
+            id: data.user.id,
+            email: data.user.email!,
+            display_name: data.user.email?.split('@')[0] || 'User'
+          })
 
-    if (error) {
-      toast.error(error.message)
-      setLoading(false)
-    } else {
-      setSent(true)
-      toast.success('Check your email for the login link!')
+          toast.success('Account created! Redirecting...')
+          router.push('/dashboard')
+        }
+      } else {
+        // Sign in
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+
+        if (error) {
+          toast.error(error.message)
+        } else if (data.user) {
+          toast.success('Welcome back!')
+          router.push('/dashboard')
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Something went wrong')
+    } finally {
       setLoading(false)
     }
-  }
-
-  if (sent) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-50 to-green-50">
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
-          <div className="text-center">
-            <div className="text-6xl mb-4">📧</div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Check your email</h1>
-            <p className="text-gray-600 mb-4">
-              We sent a magic link to <span className="font-semibold">{email}</span>
-            </p>
-            <p className="text-sm text-gray-500">
-              Click the link in the email to log in. You can close this page.
-            </p>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -63,11 +70,13 @@ export default function LoginPage() {
           <Link href="/" className="inline-block">
             <h1 className="text-5xl font-bold text-orange-600 mb-2">🍊 Fruity</h1>
           </Link>
-          <p className="text-gray-600">Sign in to start sharing or finding fruit</p>
+          <p className="text-gray-600">
+            {isSignUp ? 'Create your account' : 'Welcome back'}
+          </p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email address
@@ -84,18 +93,47 @@ export default function LoginPage() {
               />
             </div>
 
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                placeholder={isSignUp ? 'Choose a strong password (min 6 characters)' : 'Enter your password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                disabled={loading}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+            </div>
+
             <button
               type="submit"
               disabled={loading}
               className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Sending...' : 'Send Magic Link'}
+              {loading ? (isSignUp ? 'Creating account...' : 'Signing in...') : (isSignUp ? 'Create Account' : 'Sign In')}
             </button>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-500">
-              No password needed! We'll email you a secure login link.
+            <button
+              onClick={() => setIsSignUp(!isSignUp)}
+              disabled={loading}
+              className="text-sm text-orange-600 hover:text-orange-700 font-medium disabled:opacity-50"
+            >
+              {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+            </button>
+          </div>
+
+          <div className="mt-4 text-center">
+            <p className="text-xs text-gray-500">
+              {isSignUp
+                ? 'By signing up, you agree to share fruit with your neighbors!'
+                : 'Secure password authentication'}
             </p>
           </div>
         </div>

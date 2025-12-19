@@ -57,18 +57,14 @@ export default function ListingDetailPage() {
 
     // First try to get the session
     const { data: { session } } = await supabase.auth.getSession()
-    console.log('[Listing Detail] getSession result:', session?.user ? 'User found' : 'No user')
 
     if (session?.user) {
-      console.log('[Listing Detail] Setting user from session:', session.user.email)
       setUser(session.user)
       setCheckingAuth(false)
     } else {
       // If no session, try getUser as fallback
       const { data: { user } } = await supabase.auth.getUser()
-      console.log('[Listing Detail] getUser result:', user ? 'User found' : 'No user')
       if (user) {
-        console.log('[Listing Detail] Setting user from getUser:', user.email)
         setUser(user)
       }
       setCheckingAuth(false)
@@ -94,21 +90,16 @@ export default function ListingDetailPage() {
   }
 
   const handleRequestPickup = async () => {
-    console.log('[Listing Detail] handleRequestPickup called, user state:', user ? user.email : 'null')
-
     // Double-check auth before making the request
     const supabase = createClient()
     const { data: { session } } = await supabase.auth.getSession()
-    console.log('[Listing Detail] Session check in handleRequestPickup:', session?.user ? session.user.email : 'No session')
 
     if (!session?.user && !user) {
-      console.log('[Listing Detail] No auth found, redirecting to login')
       toast.error('Please sign in to request pickup')
       router.push('/login')
       return
     }
 
-    console.log('[Listing Detail] Auth verified, making request')
     setRequesting(true)
     try {
       const response = await fetch(`/api/listings/${params.id}/requests`, {
